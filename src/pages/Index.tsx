@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import AuthModal from '@/components/AuthModal';
 
 const pizzas = [
   {
@@ -30,6 +31,26 @@ const pizzas = [
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [user, setUser] = useState<{ phone: string; name: string } | null>(null);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const handleAuthSuccess = (phone: string, name: string) => {
+    const userData = { phone, name };
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+  };
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -48,7 +69,7 @@ const Index = () => {
               <div className="text-4xl">🍕</div>
               <h1 className="text-2xl font-bold text-primary">ЖарПицца</h1>
             </div>
-            <div className="hidden md:flex gap-6">
+            <div className="hidden md:flex gap-6 items-center">
               {[
                 { id: 'home', label: 'Главная' },
                 { id: 'menu', label: 'Меню' },
@@ -67,6 +88,23 @@ const Index = () => {
                   {item.label}
                 </button>
               ))}
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <div className="text-sm">
+                    <div className="font-medium">{user.name}</div>
+                    <div className="text-xs text-muted-foreground">{user.phone}</div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    <Icon name="LogOut" size={16} className="mr-1" />
+                    Выход
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => setIsAuthModalOpen(true)}>
+                  <Icon name="User" size={16} className="mr-2" />
+                  Войти
+                </Button>
+              )}
             </div>
           </div>
         </nav>
@@ -304,6 +342,12 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   );
 };
